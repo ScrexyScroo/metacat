@@ -1,8 +1,5 @@
 # metacat
-
 [![My Skills](https://skillicons.dev/icons?i=rust,discord,bots)](https://skillicons.dev)
-
-[![Rust](https://github.com/ScrexyScroo/metacat/actions/workflows/rust.yml/badge.svg)](https://github.com/ScrexyScroo/metacat/actions/workflows/rust.yml)
 
 > **Warning** <br />
 > This code is hot garbage
