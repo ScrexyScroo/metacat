@@ -59,24 +59,23 @@ pub async fn gdrive() {
             .doit()
             .await;
 
-        // ! I do not know what request to create?
-        // let req = Channel::default();
-        // let changes = hub
-        //     .changes()
-        //     .watch(req, start_page_token.start_page_token.unwrap().as_str())
-        //     .supports_all_drives(true)
-        //     .restrict_to_my_drive(false)
-        //     .include_removed(false)
-        //     .include_items_from_all_drives(true)
-        //     .include_corpus_removals(false)
-        //     .drive_id(DRIVE_ID)
-        //     .doit()
-        //     .await;
-
         let (_, change_list) = changes.expect("Some minor issue in change detection");
         println!("{:?}", change_list);
     }
 }
+// ! I do not know what request to create?
+// let req = Channel::default();
+// let changes = hub
+//     .changes()
+//     .watch(req, start_page_token.start_page_token.unwrap().as_str())
+//     .supports_all_drives(true)
+//     .restrict_to_my_drive(false)
+//     .include_removed(false)
+//     .include_items_from_all_drives(true)
+//     .include_corpus_removals(false)
+//     .drive_id(DRIVE_ID)
+//     .doit()
+//     .await;
 
 // ! Cannot use this as You cannot really run a Tokio Runtime inside another Tokio Runtime
 /*
