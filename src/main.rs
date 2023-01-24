@@ -1,3 +1,4 @@
+use google_drive3::api::ChangeList;
 use poise::futures_util::future::join;
 
 mod bot;
@@ -5,10 +6,24 @@ mod utils;
 
 #[tokio::main]
 async fn main() {
-    //let (tx, rx) = tokio::sync::mpsc::channel(1000);
+    let (tx, mut rx) = tokio::sync::mpsc::channel::<ChangeList>(10);
 
     let bot_task = tokio::task::spawn(bot::bot());
-    let watcher_task = tokio::task::spawn(utils::gdrive());
+    // let watcher_task = tokio::task::spawn(utils::gdrive());
+
+    let watcher_task = tokio::task::spawn(async move {
+        // ! Some spaghetti infinite loop - hope google doesn't ban
+        // * minor skill issue on my end
+        loop {
+            let change = utils::get_gdrive_changes().await;
+            // println!("{:#?}", change);
+            tx.send(change)
+                .await
+                .expect("Transmission of data out of gdrive thread gone wrong");
+        }
+    });
+
+    println!("{:#?}", rx.recv().await); // only prints once
 
     join(bot_task, watcher_task)
         .await
