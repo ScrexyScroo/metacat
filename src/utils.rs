@@ -1,3 +1,4 @@
+use google_drive3::api::ChangeList;
 use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 use std::thread::sleep;
@@ -8,7 +9,7 @@ static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
 static POLL_INTERVAL: u64 = 1;
 
 // * Acquired enough skill to atleast make this run in tokio
-pub async fn gdrive() {
+pub async fn get_gdrive_changes() -> ChangeList {
     let secret = oauth2::read_application_secret("clientsecret.json")
         .await
         .expect("clientsecret.json failed to load from local storage");
@@ -31,37 +32,33 @@ pub async fn gdrive() {
         auth,
     );
 
-    // ! Some spaghetti infinite loop - hope google doesn't ban
-    // * minor skill issue on my end
-    loop {
-        let interval = Duration::from_secs(POLL_INTERVAL); // seconds
-        let mut next_time = Instant::now() + interval;
+    let interval = Duration::from_secs(POLL_INTERVAL); // seconds
+    let mut next_time = Instant::now() + interval;
 
-        sleep(next_time - Instant::now());
-        next_time += interval;
+    sleep(next_time - Instant::now());
+    next_time += interval;
 
-        let (_, start_page_token) = hub
-            .changes()
-            .get_start_page_token()
-            .supports_all_drives(true)
-            .drive_id(DRIVE_ID)
-            .doit()
-            .await
-            .unwrap();
+    let (_, start_page_token) = hub
+        .changes()
+        .get_start_page_token()
+        .supports_all_drives(true)
+        .drive_id(DRIVE_ID)
+        .doit()
+        .await
+        .unwrap();
 
-        let changes = hub
-            .changes()
-            .list(start_page_token.start_page_token.unwrap().as_str())
-            // .list("207511")
-            .supports_all_drives(true)
-            .include_items_from_all_drives(true)
-            .drive_id(DRIVE_ID)
-            .doit()
-            .await;
+    let changes = hub
+        .changes()
+        .list(start_page_token.start_page_token.unwrap().as_str())
+        .supports_all_drives(true)
+        .include_items_from_all_drives(true)
+        .drive_id(DRIVE_ID)
+        .doit()
+        .await;
 
-        let (_, change_list) = changes.expect("Some minor issue in change detection");
-        println!("{:?}", change_list);
-    }
+    let (_, change) = changes.expect("Some minor issue in change detection");
+
+    return change;
 }
 // ! I do not know what request to create?
 // let req = Channel::default();
