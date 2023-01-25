@@ -1,5 +1,5 @@
-use google_drive3::api::ChangeList;
 use poise::futures_util::future::join_all;
+use serde_json::Value;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -12,7 +12,7 @@ static POLL_INTERVAL: u64 = 1;
 
 #[tokio::main]
 async fn main() {
-    let (tx, mut rx) = mpsc::channel::<ChangeList>(10);
+    let (tx, mut rx) = mpsc::channel::<Value>(10);
 
     let bot_task = tokio::task::spawn(bot::bot());
 
@@ -40,12 +40,7 @@ async fn main() {
         }
     });
 
-    let mut futures = vec![];
-
-    futures.push(bot_task);
-    futures.push(watcher_task);
-    futures.push(sync_task);
-
+    let futures = vec![bot_task, watcher_task, sync_task];
     join_all(futures).await;
 }
 
