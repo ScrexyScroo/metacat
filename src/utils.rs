@@ -1,11 +1,12 @@
-use google_drive3::api::ChangeList;
 use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 
+use serde_json::Value;
+use serde_json_utils::JsonUtils;
 static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
 
 // * Acquired enough skill to atleast make this run in tokio
-pub async fn get_gdrive_changes() -> ChangeList {
+pub async fn get_gdrive_changes() -> Value {
     let secret = oauth2::read_application_secret("clientsecret.json")
         .await
         .expect("clientsecret.json failed to load from local storage");
@@ -48,7 +49,10 @@ pub async fn get_gdrive_changes() -> ChangeList {
 
     let (_, change) = changes.expect("Some minor issue in change detection");
 
-    return change;
+    let str_object: String = serde_json::to_string(&change).unwrap();
+    let mut object: Value = serde_json::from_str(&str_object).unwrap();
+    object.skip_null_and_empty();
+    return object;
 }
 // ! I do not know what request to create?
 // let req = Channel::default();
