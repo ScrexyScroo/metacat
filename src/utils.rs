@@ -1,8 +1,8 @@
 use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
-
 use serde_json::Value;
 use serde_json_utils::JsonUtils;
+
 static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
 
 // * Acquired enough skill to atleast make this run in tokio
@@ -49,11 +49,20 @@ pub async fn get_gdrive_changes() -> Value {
 
     let (_, change) = changes.expect("Some minor issue in change detection");
 
-    let str_object: String = serde_json::to_string(&change).unwrap();
-    let mut object: Value = serde_json::from_str(&str_object).unwrap();
-    object.skip_null_and_empty();
-    return object;
+    let json_str: String =
+        serde_json::to_string(&change).expect("Issue converting json object to string");
+
+    let mut clean_json: Value = serde_json::from_str(&json_str)
+        .expect("Issue extracting value out of json_str in get_gdrive_changes");
+
+    clean_json.skip_null_and_empty();
+    return clean_json;
 }
+
+// println!("--------------------------------------------------------");
+// println!("{:?}", change);
+// println!("--------------------------------------------------------");
+
 // ! I do not know what request to create?
 // let req = Channel::default();
 // let changes = hub
