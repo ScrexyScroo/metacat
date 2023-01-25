@@ -1,22 +1,32 @@
 use google_drive3::api::ChangeList;
 use poise::futures_util::future::join_all;
+use std::thread::sleep;
+use std::time::{Duration, Instant};
+use tokio::sync::mpsc;
 
 mod bot;
 mod utils;
 
+// * keeping this at 1 gives instant feedback. But can change the value.
+static POLL_INTERVAL: u64 = 1;
+
 #[tokio::main]
 async fn main() {
-    let (tx, mut rx) = tokio::sync::mpsc::channel::<ChangeList>(10);
+    let (tx, mut rx) = mpsc::channel::<ChangeList>(10);
 
     let bot_task = tokio::task::spawn(bot::bot());
-    // let watcher_task = tokio::task::spawn(utils::gdrive());
 
     let watcher_task = tokio::task::spawn(async move {
         // ! Some spaghetti infinite loop - hope google doesn't ban
         // * minor skill issue on my end
         loop {
+            let interval = Duration::from_secs(POLL_INTERVAL); // seconds
+            let mut next_time = Instant::now() + interval;
+
+            sleep(next_time - Instant::now());
+            next_time += interval;
+
             let change = utils::get_gdrive_changes().await;
-            // println!("{:?}", change);
             tx.send(change)
                 .await
                 .expect("Transmission of data out of gdrive thread gone wrong");
@@ -29,12 +39,13 @@ async fn main() {
             println!("{:?}", rx.recv().await);
         }
     });
-    // println!("{:?}", rx.recv().await); // only prints once
 
     let mut futures = vec![];
+
     futures.push(bot_task);
     futures.push(watcher_task);
     futures.push(sync_task);
+
     join_all(futures).await;
 }
 
