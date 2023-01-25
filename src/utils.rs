@@ -1,12 +1,8 @@
 use google_drive3::api::ChangeList;
 use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
-use std::thread::sleep;
-use std::time::{Duration, Instant};
 
 static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
-// * keeping this at 1 gives instant feedback. But can change the value.
-static POLL_INTERVAL: u64 = 1;
 
 // * Acquired enough skill to atleast make this run in tokio
 pub async fn get_gdrive_changes() -> ChangeList {
@@ -31,12 +27,6 @@ pub async fn get_gdrive_changes() -> ChangeList {
         ),
         auth,
     );
-
-    let interval = Duration::from_secs(POLL_INTERVAL); // seconds
-    let mut next_time = Instant::now() + interval;
-
-    sleep(next_time - Instant::now());
-    next_time += interval;
 
     let (_, start_page_token) = hub
         .changes()
