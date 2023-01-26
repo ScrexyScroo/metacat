@@ -1,12 +1,12 @@
+use async_recursion;
 use lazy_static::lazy_static;
 use poise::serenity_prelude::{self as serenity};
-// use serenity::model::id::ChannelId;
+use serde_json::Value;
 use std::fs;
 use std::sync::Mutex;
 
 // * global variable CHANNEL_ID
 lazy_static! {
-    // static ref CHANNEL_ID: Mutex<String> = Mutex::new("".to_string());
     static ref GDRIVE_CHANNEL_ID: Mutex<u64> = Mutex::new(0);
 }
 
@@ -37,7 +37,6 @@ async fn account_age(
     Ok(())
 }
 
-// ! doens't actually set the channel for now
 #[poise::command(slash_command)]
 async fn set_gdrive_channel(
     ctx: Context<'_>,
@@ -55,8 +54,6 @@ async fn set_gdrive_channel(
 
 #[poise::command(slash_command)]
 async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
-    !todo!();
-
     ctx.say(format!(
         "Will send updates in the channel: {}",
         GDRIVE_CHANNEL_ID
@@ -69,7 +66,22 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
     Ok(())
 }
 
-pub async fn bot() {
+// * Used recursion to keep listening to rx, instead of spawing a tokio task
+#[async_recursion::async_recursion]
+async fn send_changes_via_bot(ctx: Context<'_>, mut rx: tokio::sync::mpsc::Receiver<Value>) {
+    // tokio::task::spawn(async move {
+    //     loop {
+    //         println!("{:?}", rx.recv().await);
+    //     }
+    // })
+    // .await
+    // .unwrap();
+    println!("From the bot thread {:?}", rx.recv().await);
+    ctx.say(rx.recv().await.unwrap().to_string());
+    send_changes_via_bot(ctx, rx).await
+}
+
+pub async fn bot(rx: tokio::sync::mpsc::Receiver<Value>) {
     let discord_token = fs::read_to_string("discordtoken.txt").expect("Issue with token");
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
@@ -84,6 +96,13 @@ pub async fn bot() {
                 Ok(Data {})
             })
         });
+
+    // * ----------------------------------------------------------------
+    // * ----------------------------------------------------------------
+    // ! Don't know how to pass context here :(
+    send_changes_via_bot(ctx, rx).await;
+    // * ----------------------------------------------------------------
+    // * ----------------------------------------------------------------
 
     framework.run().await.unwrap();
 }
