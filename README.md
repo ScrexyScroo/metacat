@@ -1,6 +1,8 @@
 # metacat
 [![My Skills](https://skillicons.dev/icons?i=rust,discord,bots)](https://skillicons.dev)
 
+[![Codacy Badge](https://app.codacy.com/project/badge/Grade/422c1f2b2d5b4638911cacb28165503d)](https://www.codacy.com/gh/ScrexyScroo/metacat/dashboard?utm_source=github.com&amp;utm_medium=referral&amp;utm_content=ScrexyScroo/metacat&amp;utm_campaign=Badge_Grade)
+
 > **Warning** <br />
 > This code is hot garbage
 
