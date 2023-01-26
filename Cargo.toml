@@ -5,6 +5,7 @@ edition = "2021"
 
 [dependencies]
 google-drive3 = "4.0.4+20220225"
+lazy_static = "1.4.0"
 poise = "0.5.2"
 serde-json-utils = "0.2.1"
 serde_json = "1.0.91"
