@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+async-recursion = "1.0.2"
 google-drive3 = "4.0.4+20220225"
 lazy_static = "1.4.0"
 poise = "0.5.2"
