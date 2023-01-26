@@ -14,7 +14,7 @@ static POLL_INTERVAL: u64 = 1;
 async fn main() {
     let (tx, mut rx) = mpsc::channel::<Value>(10);
 
-    let bot_task = tokio::task::spawn(bot::bot());
+    let bot_task = tokio::task::spawn(bot::bot(rx));
 
     let watcher_task = tokio::task::spawn(async move {
         // ! Some spaghetti infinite loop - hope google doesn't ban
@@ -33,14 +33,7 @@ async fn main() {
         }
     });
 
-    let sync_task = tokio::task::spawn(async move {
-        // ! Some spaghetti infinite loop again......
-        loop {
-            println!("{:?}", rx.recv().await);
-        }
-    });
-
-    let futures = vec![bot_task, watcher_task, sync_task];
+    let futures = vec![bot_task, watcher_task];
     join_all(futures).await;
 }
 
@@ -71,3 +64,11 @@ async fn main() {
 // join_all(futures).await;
 // bot::bot().await;
 // utils::gdrive().await;
+// let futures = vec![bot_task, watcher_task, sync_task];
+
+// let sync_task = tokio::task::spawn(async move {
+//     // ! Some spaghetti infinite loop again......
+//     loop {
+//         println!("{:?}", rx.recv().await);
+//     }
+// });
