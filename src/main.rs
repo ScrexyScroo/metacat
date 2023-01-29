@@ -12,13 +12,14 @@ static POLL_INTERVAL: u64 = 1;
 
 #[tokio::main]
 async fn main() {
-    let (tx, mut rx) = mpsc::channel::<Value>(10);
+    let (tx, mut rx) = mpsc::channel::<Value>(100);
 
     let bot_task = tokio::task::spawn(bot::bot(rx));
 
     let watcher_task = tokio::task::spawn(async move {
         // ! Some spaghetti infinite loop - hope google doesn't ban
-        // * minor skill issue on my end
+        // ! minor skill issue on my end
+        // * The default quota limits for Drive API are 20,000 calls every 100 seconds
         loop {
             let interval = Duration::from_secs(POLL_INTERVAL); // seconds
             let mut next_time = Instant::now() + interval;
@@ -33,6 +34,7 @@ async fn main() {
         }
     });
 
+    // let futures = vec![watcher_task];
     let futures = vec![bot_task, watcher_task];
     join_all(futures).await;
 }
