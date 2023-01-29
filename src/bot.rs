@@ -1,11 +1,18 @@
-use async_recursion;
+use async_recursion::async_recursion;
 use lazy_static::lazy_static;
-use poise::serenity_prelude::{self as serenity};
+use poise::serenity_prelude::{self as serenity, CacheAndHttp};
 use serde_json::Value;
 use std::fs;
+use std::sync::Arc;
 use std::sync::Mutex;
+use tokio::sync::mpsc;
 
-// * global variable CHANNEL_ID
+// User data, which is stored and accessible in all command invocations
+struct Data {}
+type Error = Box<dyn std::error::Error + Send + Sync>;
+type Context<'a> = poise::Context<'a, Data, Error>;
+
+// * global variable
 lazy_static! {
     static ref GDRIVE_CHANNEL_ID: Mutex<u64> = Mutex::new(0);
 }
@@ -15,10 +22,6 @@ fn set_gdrive_channel_id(channel_id: u64) {
         .lock()
         .expect("Acquiring lock failed while setting channel_id") = channel_id;
 }
-
-struct Data {} // User data, which is stored and accessible in all command invocations
-type Error = Box<dyn std::error::Error + Send + Sync>;
-type Context<'a> = poise::Context<'a, Data, Error>;
 
 #[poise::command(slash_command)]
 async fn account_age(
@@ -49,6 +52,7 @@ async fn set_gdrive_channel(
     ))
     .await
     .expect("Error while trying to spawn the watcher");
+
     Ok(())
 }
 
@@ -67,8 +71,8 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 }
 
 // * Used recursion to keep listening to rx, instead of spawing a tokio task
-#[async_recursion::async_recursion]
-async fn send_changes_via_bot(ctx: Context<'_>, mut rx: tokio::sync::mpsc::Receiver<Value>) {
+#[async_recursion]
+async fn send_changes_via_bot(ctx: &Arc<CacheAndHttp>, rx: mpsc::Receiver<Value>) {
     // tokio::task::spawn(async move {
     //     loop {
     //         println!("{:?}", rx.recv().await);
@@ -77,12 +81,15 @@ async fn send_changes_via_bot(ctx: Context<'_>, mut rx: tokio::sync::mpsc::Recei
     // .await
     // .unwrap();
     println!("From the bot thread {:?}", rx.recv().await);
-    ctx.say(rx.recv().await.unwrap().to_string());
+    // ctx.say(rx.recv().await.unwrap().to_string());
+    // ctx.http.
     send_changes_via_bot(ctx, rx).await
 }
 
-pub async fn bot(rx: tokio::sync::mpsc::Receiver<Value>) {
-    let discord_token = fs::read_to_string("discordtoken.txt").expect("Issue with token");
+pub async fn bot(rx: mpsc::Receiver<Value>) {
+    let discord_token = fs::read_to_string("discordtoken.txt")
+        .expect("Canno't read the disccord token from the file");
+
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
             commands: vec![account_age(), set_gdrive_channel(), spawn_watcher()], // Macro takes care of ctx and user
@@ -97,12 +104,12 @@ pub async fn bot(rx: tokio::sync::mpsc::Receiver<Value>) {
             })
         });
 
-    // * ----------------------------------------------------------------
-    // * ----------------------------------------------------------------
-    // ! Don't know how to pass context here :(
-    send_changes_via_bot(ctx, rx).await;
-    // * ----------------------------------------------------------------
-    // * ----------------------------------------------------------------
+    let metacat = framework.build().await.expect("Failed to init metacat");
 
-    framework.run().await.unwrap();
+    metacat.client().start().await;
+
+    let global_ctx = &metacat.client().cache_and_http;
+
+    send_changes_via_bot(global_ctx, rx);
 }
+//    framework.run().await.expect("Failed to start metacat");
