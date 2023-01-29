@@ -4,8 +4,8 @@ use poise::serenity_prelude::{self as serenity, CacheAndHttp};
 use serde_json::Value;
 use std::fs;
 use std::sync::Arc;
-use std::sync::Mutex;
 use tokio::sync::mpsc;
+use tokio::sync::Mutex;
 
 // User data, which is stored and accessible in all command invocations
 struct Data {}
@@ -17,10 +17,8 @@ lazy_static! {
     static ref GDRIVE_CHANNEL_ID: Mutex<u128> = Mutex::new(0);
 }
 
-fn set_gdrive_channel_id(channel_id: u128) {
-    *GDRIVE_CHANNEL_ID
-        .lock()
-        .expect("Acquiring lock failed while setting channel_id") = channel_id;
+async fn set_gdrive_channel_id(channel_id: u128) {
+    *GDRIVE_CHANNEL_ID.lock().await = channel_id;
 }
 
 #[poise::command(slash_command)]
@@ -58,12 +56,10 @@ async fn set_gdrive_channel(
 
 #[poise::command(slash_command)]
 async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
-    set_gdrive_channel_id(1061996380865953792);
+    // /set_gdrive_channel_id(1061996380865953792);
     ctx.say(format!(
         "Will send updates in the channel: {}",
-        GDRIVE_CHANNEL_ID
-            .lock()
-            .expect("Failed to acquire lock on global GDRIVE_CHANNEL_ID")
+        GDRIVE_CHANNEL_ID.lock().await
     ))
     .await
     .expect("Error while trying to spawn the watcher");
@@ -102,11 +98,11 @@ pub async fn bot(rx: mpsc::Receiver<Value>) {
 
     let metacat = framework.build().await.expect("Failed to init metacat");
 
-    // metacat
-    //     .client()
-    //     .start()
-    //     .await
-    //     .expect("Failed to start metacat");
+    metacat
+        .client()
+        .start()
+        .await
+        .expect("Failed to start metacat");
 
     let global_ctx = &metacat.client().cache_and_http;
 
