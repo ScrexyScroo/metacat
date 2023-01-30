@@ -101,6 +101,9 @@ pub async fn bot(rx: mpsc::Receiver<Value>) {
 
     let metacat = framework.build().await.expect("Failed to init metacat");
     let global_ctx = metacat.client().cache_and_http.clone();
+    
+    metacat.start().await.expect("Failed to start framework");
+
     set_gdrive_channel_id(1061996380865953792).await;
     send_changes_via_bot(global_ctx, rx).await;
 }
