@@ -12,7 +12,7 @@ static POLL_INTERVAL: u64 = 1;
 
 #[tokio::main]
 async fn main() {
-    let (tx, mut rx) = mpsc::channel::<Value>(100);
+    let (tx, rx) = mpsc::channel::<Value>(100);
 
     let bot_task = tokio::task::spawn(bot::bot(rx));
 
@@ -28,6 +28,7 @@ async fn main() {
             next_time += interval;
 
             let change = utils::get_gdrive_changes().await;
+            println!("{:?}", change);
             tx.send(change)
                 .await
                 .expect("Transmission of data out of gdrive thread gone wrong");
