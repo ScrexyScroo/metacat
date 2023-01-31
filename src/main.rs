@@ -1,8 +1,9 @@
 use poise::futures_util::future::join_all;
-use serde_json::Value;
+// use serde_json::Value;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
+use utils::Root;
 
 mod bot;
 mod utils;
@@ -12,7 +13,7 @@ static POLL_INTERVAL: u64 = 1;
 
 #[tokio::main]
 async fn main() {
-    let (tx, rx) = mpsc::channel::<Value>(100);
+    let (tx, rx) = mpsc::channel::<Root>(100);
 
     let bot_task = tokio::task::spawn(bot::bot(rx));
 
@@ -28,10 +29,11 @@ async fn main() {
             next_time += interval;
 
             let change = utils::get_gdrive_changes().await;
-
-            tx.send(change)
-                .await
-                .expect("Transmission of data out of gdrive thread gone wrong");
+            if change.is_some() {
+                tx.send(change.unwrap())
+                    .await
+                    .expect("Transmission of data out of gdrive thread gone wrong");
+            }
         }
     });
 

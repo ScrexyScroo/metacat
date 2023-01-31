@@ -2,10 +2,12 @@ use async_recursion::async_recursion;
 use lazy_static::lazy_static;
 use poise::serenity_prelude::{self as serenity, CacheAndHttp};
 use poise::serenity_prelude::{CacheHttp, ChannelId, GuildChannel};
-use serde_json::Value;
+// use serde_json::Value;
 use std::fs;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
+
+use crate::utils::Root;
 
 // User data, which is stored and accessible in all command invocations
 struct Data {}
@@ -71,22 +73,19 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 
 // * Used recursion to keep listening to rx, instead of spawing a tokio task
 #[async_recursion]
-async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Value>) {
+async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Root>) {
     let channel = ChannelId(*GDRIVE_CHANNEL_ID.lock().await);
-
-    // println!("sending to channel {:?}", channel);
-
     let change = rx.recv().await;
 
     channel
-        .say(&ctx.http(), change.unwrap().to_string())
+        .say(&ctx.http(), change.unwrap().kind) // figure out how to map and join into str
         .await
         .expect("Error why sending the changes via discord API to the set channel");
 
     send_changes_via_bot(ctx, rx).await;
 }
 
-pub async fn bot(rx: mpsc::Receiver<Value>) {
+pub async fn bot(rx: mpsc::Receiver<Root>) {
     let discord_token = fs::read_to_string("discordtoken.txt")
         .expect("Canno't read the disccord token from the file");
 

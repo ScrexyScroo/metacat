@@ -2,13 +2,11 @@ use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
 use serde_derive::Deserialize;
 use serde_derive::Serialize;
-use serde_json::Value;
-use serde_json_utils::JsonUtils;
 
 static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
 
 // * Acquired enough skill to atleast make this run in tokio
-pub async fn get_gdrive_changes() -> Value {
+pub async fn get_gdrive_changes() -> Option<Root> {
     let secret = oauth2::read_application_secret("clientsecret.json")
         .await
         .expect("clientsecret.json failed to load from local storage");
@@ -54,11 +52,22 @@ pub async fn get_gdrive_changes() -> Value {
     let json_str: String =
         serde_json::to_string(&change).expect("Issue converting json object to string");
 
-    let mut clean_json: Value = serde_json::from_str(&json_str)
-        .expect("Issue extracting value out of json_str in get_gdrive_changes");
+    // let mut clean_json: Value = serde_json::from_str(&json_str)
+    //     .expect("Issue extracting value out of json_str in get_gdrive_changes");
 
-    clean_json.skip_null_and_empty();
-    return clean_json;
+    // clean_json.skip_null_and_empty();
+
+    println!(
+        "Serialized to rust type: {:?}",
+        serde_json::from_str::<Root>(json_str.as_str()).unwrap()
+    );
+
+    let clean_root = serde_json::from_str::<Root>(json_str.as_str()).unwrap();
+
+    match clean_root.changes.is_empty() {
+        true => return None,
+        false => return Some(clean_root),
+    }
 }
 
 // * Made using https://transform.tools/json-to-rust-serde
