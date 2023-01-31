@@ -1,12 +1,11 @@
 use async_recursion::async_recursion;
 use lazy_static::lazy_static;
 use poise::serenity_prelude::{self as serenity, CacheAndHttp};
-use poise::serenity_prelude::{CacheHttp, ChannelId};
+use poise::serenity_prelude::{CacheHttp, ChannelId, GuildChannel};
 use serde_json::Value;
 use std::fs;
 use std::sync::Arc;
-use tokio::sync::mpsc;
-use tokio::sync::Mutex;
+use tokio::sync::{mpsc, Mutex};
 
 // User data, which is stored and accessible in all command invocations
 struct Data {}
@@ -19,6 +18,7 @@ lazy_static! {
 }
 
 async fn set_gdrive_channel_id(channel_id: u64) {
+    println!("Channel Id set {}", channel_id);
     *GDRIVE_CHANNEL_ID.lock().await = channel_id;
 }
 
@@ -42,12 +42,14 @@ async fn account_age(
 #[poise::command(slash_command)]
 async fn set_gdrive_channel(
     ctx: Context<'_>,
-    #[description = "Pass the channel id here, to set the notification channel"] channel: u64,
+    #[description = "Pass the channel id here, to set the notification channel"]
+    channel: GuildChannel,
 ) -> Result<(), Error> {
-    set_gdrive_channel_id(channel).await;
+    set_gdrive_channel_id(channel.id.0).await;
+
     ctx.say(format!(
         "Channel {} has been set for sending notifications",
-        channel
+        channel.clone()
     ))
     .await
     .expect("Error while trying to spawn the watcher");
@@ -71,6 +73,9 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 #[async_recursion]
 async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Value>) {
     let channel = ChannelId(*GDRIVE_CHANNEL_ID.lock().await);
+
+    println!("sending to channel {:?}", channel);
+
     let change = rx.recv().await;
 
     channel
@@ -101,11 +106,14 @@ pub async fn bot(rx: mpsc::Receiver<Value>) {
 
     let metacat = framework.build().await.expect("Failed to init metacat");
     let global_ctx = metacat.client().cache_and_http.clone();
-    
-    metacat.start().await.expect("Failed to start framework");
 
     set_gdrive_channel_id(1061996380865953792).await;
-    send_changes_via_bot(global_ctx, rx).await;
+
+    // * spawning a seperate tokio task so it doesn't block the parent thread.
+    // * this allows bot to recieve commands in parallel and not get stuck checking for gdrive changes
+    tokio::task::spawn(send_changes_via_bot(global_ctx, rx));
+
+    metacat.start().await.expect("Failed to start framework");
 }
 
 //    framework.run().await.expect("Failed to start metacat");
