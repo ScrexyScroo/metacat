@@ -28,7 +28,7 @@ async fn main() {
             next_time += interval;
 
             let change = utils::get_gdrive_changes().await;
-            println!("{:?}", change);
+
             tx.send(change)
                 .await
                 .expect("Transmission of data out of gdrive thread gone wrong");
