@@ -74,14 +74,14 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Value>) {
     let channel = ChannelId(*GDRIVE_CHANNEL_ID.lock().await);
 
-    println!("sending to channel {:?}", channel);
+    // println!("sending to channel {:?}", channel);
 
     let change = rx.recv().await;
 
     channel
         .say(&ctx.http(), change.unwrap().to_string())
         .await
-        .unwrap();
+        .expect("Error why sending the changes via discord API to the set channel");
 
     send_changes_via_bot(ctx, rx).await;
 }
