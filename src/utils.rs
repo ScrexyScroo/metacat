@@ -1,5 +1,7 @@
 use google_drive3::{hyper, hyper_rustls, oauth2, DriveHub};
 use oauth2::{InstalledFlowAuthenticator, InstalledFlowReturnMethod};
+use serde_derive::Deserialize;
+use serde_derive::Serialize;
 use serde_json::Value;
 use serde_json_utils::JsonUtils;
 
@@ -57,6 +59,59 @@ pub async fn get_gdrive_changes() -> Value {
 
     clean_json.skip_null_and_empty();
     return clean_json;
+}
+
+// * Made using https://transform.tools/json-to-rust-serde
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Root {
+    pub changes: Vec<Change>,
+    pub kind: String,
+    pub new_start_page_token: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Change {
+    pub change_type: String,
+    pub drive: Option<Drive>,
+    pub drive_id: Option<String>,
+    pub kind: String,
+    pub removed: bool,
+    pub team_drive: Option<TeamDrive>,
+    pub team_drive_id: Option<String>,
+    pub time: String,
+    #[serde(rename = "type")]
+    pub type_field: String,
+    pub file: Option<File>,
+    pub file_id: Option<String>,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct Drive {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct TeamDrive {
+    pub id: String,
+    pub kind: String,
+    pub name: String,
+}
+
+#[derive(Default, Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
+pub struct File {
+    pub drive_id: String,
+    pub id: String,
+    pub kind: String,
+    pub mime_type: String,
+    pub name: String,
+    pub team_drive_id: String,
 }
 
 // println!("--------------------------------------------------------");
