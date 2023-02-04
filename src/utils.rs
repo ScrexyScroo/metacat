@@ -5,6 +5,16 @@ use serde_derive::Serialize;
 
 static DRIVE_ID: &str = "0AC8Iw2zWuOj0Uk9PVA";
 
+// * Icons for discord embeds
+pub static MKV_ICON: &str = "https://static.vecteezy.com/system/resources/previews/009/130/185/non_2x/mkv-logo-mkv-letter-mkv-letter-logo-design-initials-mkv-logo-linked-with-circle-and-uppercase-monogram-logo-mkv-typography-for-technology-business-and-real-estate-brand-vector.jpg";
+pub static FLAC_ICON: &str =
+    "https://upload.wikimedia.org/wikipedia/commons/f/f3/FLAC_logo_transparent.png";
+pub static CAT_ICON: &str =
+    "http://img2.chinadaily.com.cn/images/201909/10/5d76f03ea310cf3e979b79c5.jpeg";
+pub static MP4_ICON: &str = "https://logowik.com/content/uploads/images/962_mp4video.jpg";
+pub static OPUS_ICON: &str =
+    "https://www.pngitem.com/pimgs/m/200-2008269_opus-codec-icon-hd-png-download.png";
+
 // * Acquired enough skill to atleast make this run in tokio
 pub async fn get_gdrive_changes() -> Option<Root> {
     let secret = oauth2::read_application_secret("clientsecret.json")
@@ -62,12 +72,17 @@ pub async fn get_gdrive_changes() -> Option<Root> {
 }
 
 impl Change {
-    pub fn get_file_name(&self) -> &str {
-        self.file
-            .as_ref()
-            .expect("Failed to get file name")
-            .name
-            .as_str()
+    pub fn get_file_name(&self) -> Option<&str> {
+        match self.file.is_some() {
+            true => Some(
+                self.file
+                    .as_ref()
+                    .expect("Failed to get file name")
+                    .name
+                    .as_str(),
+            ),
+            false => None,
+        }
     }
 
     pub fn get_mime_type(&self) -> &str {

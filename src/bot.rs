@@ -7,7 +7,7 @@ use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
 
 use crate::utils::Root;
-
+use crate::utils::{CAT_ICON, FLAC_ICON, MKV_ICON, MP4_ICON, OPUS_ICON};
 // User data, which is stored and accessible in all command invocations
 struct Data {}
 type Error = Box<dyn std::error::Error + Send + Sync>;
@@ -75,30 +75,42 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Root>) {
     let channel = ChannelId(*GDRIVE_CHANNEL_ID.lock().await);
     let change = rx.recv().await;
-    let changes = change
-        .expect("Failed to get info from the gdrive thread")
-        .changes;
 
-    for chg in changes {
-        channel
-            .send_message(&ctx.http(), |m| {
-                m.embed(|e| {
-                    e.title(chg.get_file_name())
-                        // .description("")
-                        .field("File Type", chg.get_mime_type(), true)
-                        .field("File Id", chg.get_file_id(), true)
+    for chg in change
+        .expect("Failed to get info from the gdrive thread")
+        .changes
+    {
+        if chg.get_file_name().is_some() {
+            let logo = match chg.get_mime_type() {
+                "audio/x-flac" => FLAC_ICON,
+                "video/x-matroska" => MKV_ICON,
+                "video/mp4" => MP4_ICON,
+                "audio/ogg" => OPUS_ICON,
+                _ => CAT_ICON,
+            };
+
+            channel
+                .send_message(&ctx.http(), |m| {
+                    m.embed(|e| {
+                        e.title(chg.get_file_name().unwrap())
+                            // .description("")
+                            .field("File Type", chg.get_mime_type(), true)
+                            .field("File Id", chg.get_file_id(), true)
+                            .thumbnail(logo)
+                    })
                 })
-            })
-            // .say(&ctx.http(), change.unwrap().kind)
-            .await
-            .expect("Error why sending the changes via discord API to the set channel");
+                // .say(&ctx.http(), change.unwrap().kind)
+                .await
+                .expect("Error why sending the changes via discord API to the set channel");
+        };
     }
+
     send_changes_via_bot(ctx, rx).await;
 }
 
 pub async fn bot(rx: mpsc::Receiver<Root>) {
     let discord_token = fs::read_to_string("discordtoken.txt")
-        .expect("Canno't read the discord token from the file");
+        .expect("Canno't read the disccord token from the file");
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
