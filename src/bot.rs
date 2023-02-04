@@ -98,7 +98,7 @@ async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Roo
 
 pub async fn bot(rx: mpsc::Receiver<Root>) {
     let discord_token = fs::read_to_string("discordtoken.txt")
-        .expect("Canno't read the disccord token from the file");
+        .expect("Canno't read the discord token from the file");
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
