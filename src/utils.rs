@@ -52,21 +52,38 @@ pub async fn get_gdrive_changes() -> Option<Root> {
     let json_str: String =
         serde_json::to_string(&change).expect("Issue converting json object to string");
 
-    // let mut clean_json: Value = serde_json::from_str(&json_str)
-    //     .expect("Issue extracting value out of json_str in get_gdrive_changes");
-
-    // clean_json.skip_null_and_empty();
-
-    println!(
-        "Serialized to rust type: {:?}",
-        serde_json::from_str::<Root>(json_str.as_str()).unwrap()
-    );
-
     let clean_root = serde_json::from_str::<Root>(json_str.as_str()).unwrap();
 
+    println!("{:?}", clean_root);
     match clean_root.changes.is_empty() {
         true => return None,
         false => return Some(clean_root),
+    }
+}
+
+impl Change {
+    pub fn get_file_name(&self) -> &str {
+        self.file
+            .as_ref()
+            .expect("Failed to get file name")
+            .name
+            .as_str()
+    }
+
+    pub fn get_mime_type(&self) -> &str {
+        self.file
+            .as_ref()
+            .expect("Failed to get mime type")
+            .mime_type
+            .as_str()
+    }
+
+    pub fn get_file_id(&self) -> &str {
+        self.file
+            .as_ref()
+            .expect("Failed to get file id")
+            .id
+            .as_str()
     }
 }
 
@@ -122,6 +139,16 @@ pub struct File {
     pub name: String,
     pub team_drive_id: String,
 }
+
+// let mut clean_json: Value = serde_json::from_str(&json_str)
+//     .expect("Issue extracting value out of json_str in get_gdrive_changes");
+
+// clean_json.skip_null_and_empty();
+
+// println!(
+//     "Serialized to rust type: {:?}",
+//     serde_json::from_str::<Root>(json_str.as_str()).unwrap()
+// );
 
 // println!("--------------------------------------------------------");
 // println!("{:?}", change);

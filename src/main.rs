@@ -1,5 +1,4 @@
 use poise::futures_util::future::join_all;
-// use serde_json::Value;
 use std::thread::sleep;
 use std::time::{Duration, Instant};
 use tokio::sync::mpsc;
@@ -8,8 +7,8 @@ use utils::Root;
 mod bot;
 mod utils;
 
-// * keeping this at 1 gives instant feedback. But can change the value.
-static POLL_INTERVAL: u64 = 1;
+// * keeping this at 500 gives instant feedback. But can change the value.
+static POLL_INTERVAL: u64 = 500;
 
 #[tokio::main]
 async fn main() {
@@ -22,7 +21,7 @@ async fn main() {
         // ! minor skill issue on my end
         // * The default quota limits for Drive API are 20,000 calls every 100 seconds
         loop {
-            let interval = Duration::from_secs(POLL_INTERVAL); // seconds
+            let interval = Duration::from_millis(POLL_INTERVAL); // seconds
             let mut next_time = Instant::now() + interval;
 
             sleep(next_time - Instant::now());

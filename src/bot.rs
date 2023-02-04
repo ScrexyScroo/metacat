@@ -2,7 +2,6 @@ use async_recursion::async_recursion;
 use lazy_static::lazy_static;
 use poise::serenity_prelude::{self as serenity, CacheAndHttp};
 use poise::serenity_prelude::{CacheHttp, ChannelId, GuildChannel};
-// use serde_json::Value;
 use std::fs;
 use std::sync::Arc;
 use tokio::sync::{mpsc, Mutex};
@@ -76,12 +75,24 @@ async fn spawn_watcher(ctx: Context<'_>) -> Result<(), Error> {
 async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Root>) {
     let channel = ChannelId(*GDRIVE_CHANNEL_ID.lock().await);
     let change = rx.recv().await;
+    let changes = change
+        .expect("Failed to get info from the gdrive thread")
+        .changes;
 
-    channel
-        .say(&ctx.http(), change.unwrap().kind) // figure out how to map and join into str
-        .await
-        .expect("Error why sending the changes via discord API to the set channel");
-
+    for chg in changes {
+        channel
+            .send_message(&ctx.http(), |m| {
+                m.embed(|e| {
+                    e.title(chg.get_file_name())
+                        // .description("")
+                        .field("File Type", chg.get_mime_type(), true)
+                        .field("File Id", chg.get_file_id(), true)
+                })
+            })
+            // .say(&ctx.http(), change.unwrap().kind)
+            .await
+            .expect("Error why sending the changes via discord API to the set channel");
+    }
     send_changes_via_bot(ctx, rx).await;
 }
 
@@ -91,7 +102,7 @@ pub async fn bot(rx: mpsc::Receiver<Root>) {
 
     let framework = poise::Framework::builder()
         .options(poise::FrameworkOptions {
-            commands: vec![account_age(), set_gdrive_channel(), spawn_watcher()], // Macro takes care of ctx and user
+            commands: vec![account_age(), set_gdrive_channel(), spawn_watcher()],
             ..Default::default()
         })
         .token(discord_token)
