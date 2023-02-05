@@ -64,10 +64,12 @@ pub async fn get_gdrive_changes() -> Option<Root> {
 
     let clean_root = serde_json::from_str::<Root>(json_str.as_str()).unwrap();
 
-    println!("{:?}", clean_root);
     match clean_root.changes.is_empty() {
         true => return None,
-        false => return Some(clean_root),
+        false => {
+            println!("{:#?}", clean_root);
+            return Some(clean_root);
+        }
     }
 }
 
