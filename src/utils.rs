@@ -46,7 +46,7 @@ pub async fn get_gdrive_changes() -> Option<Root> {
         .drive_id(DRIVE_ID)
         .doit()
         .await
-        .unwrap();
+        .expect("Issue getting start page token");
 
     let changes = hub
         .changes()

@@ -101,7 +101,7 @@ async fn send_changes_via_bot(ctx: Arc<CacheAndHttp>, mut rx: mpsc::Receiver<Roo
                 })
                 // .say(&ctx.http(), change.unwrap().kind)
                 .await
-                .expect("Error why sending the changes via discord API to the set channel");
+                .expect("Error while sending the changes via discord API to the set channel");
         };
     }
 
@@ -129,7 +129,7 @@ pub async fn bot(rx: mpsc::Receiver<Root>) {
     let metacat = framework.build().await.expect("Failed to init metacat");
     let global_ctx = metacat.client().cache_and_http.clone();
 
-    set_gdrive_channel_id(1061996380865953792).await;
+    set_gdrive_channel_id(1073888120434602075).await;
 
     // * spawning a seperate tokio task so it doesn't block the parent thread.
     // * this allows bot to recieve commands in parallel and not get stuck checking for gdrive changes

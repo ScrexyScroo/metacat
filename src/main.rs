@@ -8,11 +8,11 @@ mod bot;
 mod utils;
 
 // * keeping this at 500 gives instant feedback. But can change the value.
-static POLL_INTERVAL: u64 = 500;
+static POLL_INTERVAL: u64 = 100;
 
 #[tokio::main]
 async fn main() {
-    let (tx, rx) = mpsc::channel::<Root>(100);
+    let (tx, rx) = mpsc::channel::<Root>(100_000);
 
     let bot_task = tokio::task::spawn(bot::bot(rx));
 
@@ -29,7 +29,7 @@ async fn main() {
 
             let change = utils::get_gdrive_changes().await;
             if change.is_some() {
-                tx.send(change.unwrap())
+                tx.send(change.expect("Grabbing change failed on transmission"))
                     .await
                     .expect("Transmission of data out of gdrive thread gone wrong");
             }
